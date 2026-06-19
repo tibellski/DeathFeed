@@ -6,7 +6,7 @@ local defaults = {
     x = 0,
     y = 0,
     width = 180,
-    height = 120,
+    height = 124,
     hidden = false,
     hideOriginalChat = true,
     showKiller = true,
@@ -38,8 +38,35 @@ DeathFeedWindow:SetResizable(true)
 DeathFeedWindow:EnableMouse(false)
 DeathFeedWindow:SetClampedToScreen(true)
 
-function updateResizeBounds()
+local function saveWindowPosition()
+    local point, _, relativePoint, x, y = DeathFeedWindow:GetPoint()
+
+    DeathFeedDB.point = point
+    DeathFeedDB.relativePoint = relativePoint
+    DeathFeedDB.x = x
+    DeathFeedDB.y = y
+end
+
+local function setWindowHeightKeepingTop(height)
+    local oldTop = DeathFeedWindow:GetTop()
+    local point, relativeTo, relativePoint, x, y = DeathFeedWindow:GetPoint()
+
+    DeathFeedWindow:SetHeight(height)
+
+    local newTop = DeathFeedWindow:GetTop()
+
+    if oldTop and newTop and point then
+        DeathFeedWindow:ClearAllPoints()
+        DeathFeedWindow:SetPoint(point, relativeTo, relativePoint, x, y + oldTop - newTop)
+    end
+
+    DeathFeedDB.height = height
+    saveWindowPosition()
+end
+
+function updateResizeBounds(previousShowHeaders)
     local minWidth = 180
+    local minHeight = getFrameChromeHeight() + (5 * rowHeight)
 
     if DeathFeedDB.showKiller and DeathFeedDB.showZone then
         minWidth = 430
@@ -50,22 +77,23 @@ function updateResizeBounds()
     end
 
     if DeathFeedWindow.SetResizeBounds then
-        DeathFeedWindow:SetResizeBounds(minWidth, 120, 650, 500)
+        DeathFeedWindow:SetResizeBounds(minWidth, minHeight, 650, 500)
     end
 
     if DeathFeedWindow:GetWidth() < minWidth then
         DeathFeedWindow:SetWidth(minWidth)
         DeathFeedDB.width = minWidth
     end
-end
 
-local function saveWindowPosition()
-    local point, _, relativePoint, x, y = DeathFeedWindow:GetPoint()
+    if previousShowHeaders ~= nil and previousShowHeaders ~= DeathFeedDB.showHeaders then
+        local previousChromeHeight = getFrameChromeHeight(previousShowHeaders)
+        local heightDelta = getFrameChromeHeight() - previousChromeHeight
+        local newHeight = math.max(minHeight, math.min(500, DeathFeedWindow:GetHeight() + heightDelta))
 
-    DeathFeedDB.point = point
-    DeathFeedDB.relativePoint = relativePoint
-    DeathFeedDB.x = x
-    DeathFeedDB.y = y
+        setWindowHeightKeepingTop(newHeight)
+    elseif DeathFeedWindow:GetHeight() < minHeight then
+        setWindowHeightKeepingTop(minHeight)
+    end
 end
 
 local function scrollHistory(delta)
@@ -153,15 +181,19 @@ function getHeaderOffset()
         return 31
     end
 
-    return 18
+    return 10
 end
 
-function getFrameChromeHeight()
-    if DeathFeedDB.showHeaders then
-        return 42
+function getFrameChromeHeight(showHeaders)
+    if showHeaders == nil then
+        showHeaders = DeathFeedDB.showHeaders
     end
 
-    return 29
+    if showHeaders then
+        return 54
+    end
+
+    return 30
 end
 
 function getMaxRows()

@@ -107,8 +107,10 @@ showHeadersCheckbox:SetScript("OnShow", function(self)
 end)
 
 showHeadersCheckbox:SetScript("OnClick", function(self)
+    local previousShowHeaders = DeathFeedDB.showHeaders
     DeathFeedDB.showHeaders = self:GetChecked()
 
+    updateResizeBounds(previousShowHeaders)
     updateLayout()
     updateRows(false)
 end)
