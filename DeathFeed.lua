@@ -9,9 +9,9 @@ local defaults = {
     height = 124,
     hidden = false,
     hideOriginalChat = true,
-    showKiller = true,
-    showZone = true,
-    showHeaders = true,
+    hideKiller = false,
+    hideZone = false,
+    hideHeaders = false,
     playGuildSound = true,
     minimumLevel = 10,
     minimap = {
@@ -19,6 +19,22 @@ local defaults = {
     },
     history = {}
 }
+
+if DeathFeedDB.hideKiller == nil and DeathFeedDB.showKiller ~= nil then
+    DeathFeedDB.hideKiller = not DeathFeedDB.showKiller
+end
+
+if DeathFeedDB.hideZone == nil and DeathFeedDB.showZone ~= nil then
+    DeathFeedDB.hideZone = not DeathFeedDB.showZone
+end
+
+if DeathFeedDB.hideHeaders == nil and DeathFeedDB.showHeaders ~= nil then
+    DeathFeedDB.hideHeaders = not DeathFeedDB.showHeaders
+end
+
+DeathFeedDB.showKiller = nil
+DeathFeedDB.showZone = nil
+DeathFeedDB.showHeaders = nil
 
 copyDefaults(defaults, DeathFeedDB)
 
@@ -64,15 +80,15 @@ local function setWindowHeightKeepingTop(height)
     saveWindowPosition()
 end
 
-function updateResizeBounds(previousShowHeaders)
+function updateResizeBounds(previousHideHeaders)
     local minWidth = 180
     local minHeight = getFrameChromeHeight() + (5 * rowHeight)
 
-    if DeathFeedDB.showKiller and DeathFeedDB.showZone then
+    if not DeathFeedDB.hideKiller and not DeathFeedDB.hideZone then
         minWidth = 430
-    elseif DeathFeedDB.showKiller then
+    elseif not DeathFeedDB.hideKiller then
         minWidth = 320
-    elseif DeathFeedDB.showZone then
+    elseif not DeathFeedDB.hideZone then
         minWidth = 320
     end
 
@@ -85,8 +101,8 @@ function updateResizeBounds(previousShowHeaders)
         DeathFeedDB.width = minWidth
     end
 
-    if previousShowHeaders ~= nil and previousShowHeaders ~= DeathFeedDB.showHeaders then
-        local previousChromeHeight = getFrameChromeHeight(previousShowHeaders)
+    if previousHideHeaders ~= nil and previousHideHeaders ~= DeathFeedDB.hideHeaders then
+        local previousChromeHeight = getFrameChromeHeight(previousHideHeaders)
         local heightDelta = getFrameChromeHeight() - previousChromeHeight
         local newHeight = math.max(minHeight, math.min(500, DeathFeedWindow:GetHeight() + heightDelta))
 
@@ -177,19 +193,19 @@ title:SetPoint("TOPLEFT", 8, -8)
 title:SetText("|cffcc4444Death Feed|r")
 
 function getHeaderOffset()
-    if DeathFeedDB.showHeaders then
+    if not DeathFeedDB.hideHeaders then
         return 31
     end
 
     return 10
 end
 
-function getFrameChromeHeight(showHeaders)
-    if showHeaders == nil then
-        showHeaders = DeathFeedDB.showHeaders
+function getFrameChromeHeight(hideHeaders)
+    if hideHeaders == nil then
+        hideHeaders = DeathFeedDB.hideHeaders
     end
 
-    if showHeaders then
+    if not hideHeaders then
         return 54
     end
 
@@ -198,7 +214,7 @@ end
 
 function getMaxRows()
     local usableHeight = DeathFeedWindow:GetHeight() - getFrameChromeHeight()
-    return math.max(1, math.min(maxHistory, math.floor(usableHeight / rowHeight)))
+    return math.max(1, math.min(maxHistory, math.floor((usableHeight + 0.01) / rowHeight)))
 end
 
 local function makeColumn(parent, x, y, width)
@@ -290,14 +306,14 @@ function updateLayout()
     local killerWidth = 0
     local zoneWidth = 0
 
-    if DeathFeedDB.showKiller and DeathFeedDB.showZone then
+    if not DeathFeedDB.hideKiller and not DeathFeedDB.hideZone then
         nameWidth = 90
         killerWidth = 120
         zoneWidth = math.max(60, width - zoneX - rightPadding)
-    elseif DeathFeedDB.showKiller then
+    elseif not DeathFeedDB.hideKiller then
         nameWidth = 90
         killerWidth = math.max(80, width - killerX - rightPadding)
-    elseif DeathFeedDB.showZone then
+    elseif not DeathFeedDB.hideZone then
         nameWidth = 90
         zoneX = 180
         zoneWidth = math.max(80, width - zoneX - rightPadding)
@@ -318,11 +334,11 @@ function updateLayout()
     headerTexts.zone:ClearAllPoints()
     headerTexts.zone:SetPoint("TOPLEFT", zoneX, -26)
 
-    headerTexts.time:SetShown(DeathFeedDB.showHeaders)
-    headerTexts.level:SetShown(DeathFeedDB.showHeaders)
-    headerTexts.name:SetShown(DeathFeedDB.showHeaders)
-    headerTexts.killer:SetShown(DeathFeedDB.showHeaders and DeathFeedDB.showKiller)
-    headerTexts.zone:SetShown(DeathFeedDB.showHeaders and DeathFeedDB.showZone)
+    headerTexts.time:SetShown(not DeathFeedDB.hideHeaders)
+    headerTexts.level:SetShown(not DeathFeedDB.hideHeaders)
+    headerTexts.name:SetShown(not DeathFeedDB.hideHeaders)
+    headerTexts.killer:SetShown(not DeathFeedDB.hideHeaders and not DeathFeedDB.hideKiller)
+    headerTexts.zone:SetShown(not DeathFeedDB.hideHeaders and not DeathFeedDB.hideZone)
 
     for i = 1, maxHistory do
         local rowY = -getHeaderOffset() - (i * rowHeight)
@@ -351,8 +367,8 @@ function updateLayout()
         rowTexts[i].zone:SetPoint("TOPLEFT", zoneX, rowY)
         rowTexts[i].zone:SetWidth(zoneWidth)
 
-        rowTexts[i].killer:SetShown(DeathFeedDB.showKiller)
-        rowTexts[i].zone:SetShown(DeathFeedDB.showZone)
+        rowTexts[i].killer:SetShown(not DeathFeedDB.hideKiller)
+        rowTexts[i].zone:SetShown(not DeathFeedDB.hideZone)
     end
 end
 
@@ -405,29 +421,29 @@ function updateRows(animated)
             rowTexts[i].level:Show()
             rowTexts[i].name:Show()
 
-            rowTexts[i].killer:SetShown(DeathFeedDB.showKiller)
-            rowTexts[i].zone:SetShown(DeathFeedDB.showZone)
+            rowTexts[i].killer:SetShown(not DeathFeedDB.hideKiller)
+            rowTexts[i].zone:SetShown(not DeathFeedDB.hideZone)
 
             if animated and i == 1 and historyOffset == 0 then
                 rowTexts[i].time:SetAlpha(0)
                 rowTexts[i].level:SetAlpha(0)
                 rowTexts[i].name:SetAlpha(0)
-                if DeathFeedDB.showKiller then
+                if not DeathFeedDB.hideKiller then
                     rowTexts[i].killer:SetAlpha(0)
                 end
 
-                if DeathFeedDB.showZone then
+                if not DeathFeedDB.hideZone then
                     rowTexts[i].zone:SetAlpha(0)
                 end
 
                 UIFrameFadeIn(rowTexts[i].time, 0.35, 0, 1)
                 UIFrameFadeIn(rowTexts[i].level, 0.35, 0, 1)
                 UIFrameFadeIn(rowTexts[i].name, 0.35, 0, 1)
-                if DeathFeedDB.showKiller then
+                if not DeathFeedDB.hideKiller then
                     UIFrameFadeIn(rowTexts[i].killer, 0.35, 0, 1)
                 end
 
-                if DeathFeedDB.showZone then
+                if not DeathFeedDB.hideZone then
                     UIFrameFadeIn(rowTexts[i].zone, 0.35, 0, 1)
                 end
             else
