@@ -402,6 +402,12 @@ headerTexts.zone = makeHeader("|cff888888Zone|r")
 local rowFrames = {}
 local rowTexts = {}
 local tooltipFadeDuration = 0.15
+local mobClassificationMarkers = {
+    ["Elite"] = "|cffffd100(E)|r",
+    ["Rare Elite"] = "|cffffd100(|r|cffc0c0c0RE|r|cffffd100)|r",
+    ["World Boss"] = "|cff55ff55(WB)|r",
+    ["Rare"] = "|cffc0c0c0(R)|r"
+}
 
 for i = 1, maxHistory do
     local y = -getHeaderOffset() - (i * rowHeight)
@@ -429,11 +435,17 @@ for i = 1, maxHistory do
             local rowLevel = tostring(self.row.level or "")
             local rowKiller = tostring(self.row.killer or "Unknown")
             local rowZone = tostring(self.row.zone or "Unknown")
+            local mobClassification = self.row.mobClassification or getMobClassification(rowKiller)
 
             GameTooltip:SetOwner(self, "ANCHOR_CURSOR")
             GameTooltip:AddLine(rowName)
             GameTooltip:AddLine("Level: " .. rowLevel, 1, 1, 1)
             GameTooltip:AddLine("Killed by: " .. rowKiller, 1, 0.45, 0.45)
+
+            if mobClassification then
+                GameTooltip:AddLine("Classification: " .. mobClassification, 1, 0.75, 0.25)
+            end
+
             GameTooltip:AddLine("Zone: " .. rowZone, 0.8, 0.8, 0.8)
 
             if UIFrameFadeRemoveFrame then
@@ -554,6 +566,7 @@ function updateRows(animated)
             local rowName = tostring(row.name or "Unknown")
             local rowKiller = tostring(row.killer or "Unknown")
             local rowZone = tostring(row.zone or "Unknown")
+            local mobClassification = row.mobClassification or getMobClassification(rowKiller)
 
             rowFrames[i].row = row
             rowFrames[i].deathName = rowName
@@ -579,7 +592,14 @@ function updateRows(animated)
             elseif rowKiller == "Fatigue" then
                 rowTexts[i].killer:SetText("|cff66ccff" .. rowKiller .. "|r")
             else
-                rowTexts[i].killer:SetText("|cffff7777" .. rowKiller .. "|r")
+                local marker = mobClassificationMarkers[mobClassification]
+                local markerText = ""
+
+                if marker then
+                    markerText = marker .. " "
+                end
+
+                rowTexts[i].killer:SetText(markerText .. "|cffff7777" .. rowKiller .. "|r")
             end
 
             local zonePrefix = ""
@@ -587,7 +607,7 @@ function updateRows(animated)
             if isRaidZone(rowZone) then
                 zonePrefix = "|cffff3333(R)|r "
             elseif isDungeonZone(rowZone) then
-                zonePrefix = "|cff66ccff(D)|r "
+                zonePrefix = "|cffb266ff(D)|r "
             end
 
             rowTexts[i].zone:SetText(zonePrefix .. "|cffcccccc" .. rowZone .. "|r")

@@ -49,6 +49,7 @@ function addDeathMessage(death)
         name = death.name,
         level = death.level,
         killer = death.killer,
+        mobClassification = getMobClassification(death.killer),
         zone = death.zone,
         isGuildDeath = isGuildDeath
     }
