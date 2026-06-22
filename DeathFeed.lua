@@ -582,7 +582,15 @@ function updateRows(animated)
                 rowTexts[i].killer:SetText("|cffff7777" .. rowKiller .. "|r")
             end
 
-            rowTexts[i].zone:SetText("|cffcccccc" .. rowZone .. "|r")
+            local zonePrefix = ""
+
+            if isRaidZone(rowZone) then
+                zonePrefix = "|cffff3333(R)|r "
+            elseif isDungeonZone(rowZone) then
+                zonePrefix = "|cff66ccff(D)|r "
+            end
+
+            rowTexts[i].zone:SetText(zonePrefix .. "|cffcccccc" .. rowZone .. "|r")
 
             rowTexts[i].time:Show()
             rowTexts[i].level:Show()
