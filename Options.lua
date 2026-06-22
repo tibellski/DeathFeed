@@ -37,80 +37,28 @@ hideChatCheckbox:SetScript("OnClick", function(self)
 end)
 
     -------------------------------------------------------------------
-    -- Killer
+    -- Compact mode
     -------------------------------------------------------------------
 
-local hideKillerCheckbox = CreateFrame(
+local compactModeCheckbox = CreateFrame(
     "CheckButton",
     nil,
     DeathFeedOptionsPanel,
     "InterfaceOptionsCheckButtonTemplate"
 )
 
-hideKillerCheckbox:SetPoint("TOPLEFT", hideChatCheckbox, "BOTTOMLEFT", 0, -8)
-hideKillerCheckbox.Text:SetText("Hide killed by column")
+compactModeCheckbox:SetPoint("TOPLEFT", hideChatCheckbox, "BOTTOMLEFT", 0, -8)
+compactModeCheckbox.Text:SetText("Compact mode")
 
-hideKillerCheckbox:SetScript("OnShow", function(self)
-    self:SetChecked(DeathFeedDB.hideKiller)
+compactModeCheckbox:SetScript("OnShow", function(self)
+    self:SetChecked(DeathFeedDB.compactMode)
 end)
 
-hideKillerCheckbox:SetScript("OnClick", function(self)
-    DeathFeedDB.hideKiller = self:GetChecked()
+compactModeCheckbox:SetScript("OnClick", function(self)
+    local previousCompactMode = DeathFeedDB.compactMode
+    DeathFeedDB.compactMode = self:GetChecked()
 
-    updateResizeBounds()
-    updateLayout()
-    updateRows(false)
-end)
-
-    -------------------------------------------------------------------
-    -- Zone
-    -------------------------------------------------------------------
-
-local hideZoneCheckbox = CreateFrame(
-    "CheckButton",
-    nil,
-    DeathFeedOptionsPanel,
-    "InterfaceOptionsCheckButtonTemplate"
-)
-
-hideZoneCheckbox:SetPoint("TOPLEFT", hideKillerCheckbox, "BOTTOMLEFT", 0, -8)
-hideZoneCheckbox.Text:SetText("Hide zone column")
-
-hideZoneCheckbox:SetScript("OnShow", function(self)
-    self:SetChecked(DeathFeedDB.hideZone)
-end)
-
-hideZoneCheckbox:SetScript("OnClick", function(self)
-    DeathFeedDB.hideZone = self:GetChecked()
-
-    updateResizeBounds()
-    updateLayout()
-    updateRows(false)
-end)
-
--------------------------------------------------------------------
--- Headers
--------------------------------------------------------------------
-
-local hideHeadersCheckbox = CreateFrame(
-    "CheckButton",
-    nil,
-    DeathFeedOptionsPanel,
-    "InterfaceOptionsCheckButtonTemplate"
-)
-
-hideHeadersCheckbox:SetPoint("TOPLEFT", hideZoneCheckbox, "BOTTOMLEFT", 0, -8)
-hideHeadersCheckbox.Text:SetText("Hide column headers")
-
-hideHeadersCheckbox:SetScript("OnShow", function(self)
-    self:SetChecked(DeathFeedDB.hideHeaders)
-end)
-
-hideHeadersCheckbox:SetScript("OnClick", function(self)
-    local previousHideHeaders = DeathFeedDB.hideHeaders
-    DeathFeedDB.hideHeaders = self:GetChecked()
-
-    updateResizeBounds(previousHideHeaders)
+    updateResizeBounds(previousCompactMode)
     updateLayout()
     updateRows(false)
 end)
@@ -126,7 +74,7 @@ local playSoundCheckbox = CreateFrame(
     "InterfaceOptionsCheckButtonTemplate"
 )
 
-playSoundCheckbox:SetPoint("TOPLEFT", hideHeadersCheckbox, "BOTTOMLEFT", 0, -8)
+playSoundCheckbox:SetPoint("TOPLEFT", compactModeCheckbox, "BOTTOMLEFT", 0, -8)
 playSoundCheckbox.Text:SetText("Play sound on guild death")
 
 playSoundCheckbox:SetScript("OnShow", function(self)

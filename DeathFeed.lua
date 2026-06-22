@@ -9,9 +9,7 @@ local defaults = {
     height = 124,
     hidden = false,
     hideOriginalChat = true,
-    hideKiller = false,
-    hideZone = false,
-    hideHeaders = false,
+    compactMode = false,
     playGuildSound = true,
     minimumLevel = 10,
     minimap = {
@@ -32,9 +30,18 @@ if DeathFeedDB.hideHeaders == nil and DeathFeedDB.showHeaders ~= nil then
     DeathFeedDB.hideHeaders = not DeathFeedDB.showHeaders
 end
 
+if DeathFeedDB.compactMode == nil then
+    DeathFeedDB.compactMode = DeathFeedDB.hideKiller == true
+        and DeathFeedDB.hideZone == true
+        and DeathFeedDB.hideHeaders == true
+end
+
 DeathFeedDB.showKiller = nil
 DeathFeedDB.showZone = nil
 DeathFeedDB.showHeaders = nil
+DeathFeedDB.hideKiller = nil
+DeathFeedDB.hideZone = nil
+DeathFeedDB.hideHeaders = nil
 
 copyDefaults(defaults, DeathFeedDB)
 
@@ -80,29 +87,28 @@ local function setWindowHeightKeepingTop(height)
     saveWindowPosition()
 end
 
-function updateResizeBounds(previousHideHeaders)
+function updateResizeBounds(previousCompactMode)
     local minWidth = 180
     local minHeight = getFrameChromeHeight() + (5 * rowHeight)
 
-    if not DeathFeedDB.hideKiller and not DeathFeedDB.hideZone then
-        minWidth = 430
-    elseif not DeathFeedDB.hideKiller then
-        minWidth = 320
-    elseif not DeathFeedDB.hideZone then
-        minWidth = 320
+    if not DeathFeedDB.compactMode then
+        minWidth = 517
     end
 
     if DeathFeedWindow.SetResizeBounds then
         DeathFeedWindow:SetResizeBounds(minWidth, minHeight, 650, 500)
     end
 
-    if DeathFeedWindow:GetWidth() < minWidth then
+    if previousCompactMode ~= nil and previousCompactMode ~= DeathFeedDB.compactMode then
+        DeathFeedWindow:SetWidth(minWidth)
+        DeathFeedDB.width = minWidth
+    elseif DeathFeedWindow:GetWidth() < minWidth then
         DeathFeedWindow:SetWidth(minWidth)
         DeathFeedDB.width = minWidth
     end
 
-    if previousHideHeaders ~= nil and previousHideHeaders ~= DeathFeedDB.hideHeaders then
-        local previousChromeHeight = getFrameChromeHeight(previousHideHeaders)
+    if previousCompactMode ~= nil and previousCompactMode ~= DeathFeedDB.compactMode then
+        local previousChromeHeight = getFrameChromeHeight(previousCompactMode)
         local heightDelta = getFrameChromeHeight() - previousChromeHeight
         local newHeight = math.max(minHeight, math.min(500, DeathFeedWindow:GetHeight() + heightDelta))
 
@@ -152,7 +158,7 @@ resizeHandle:SetPushedTexture("Interface\\ChatFrame\\UI-ChatIM-SizeGrabber-Down"
 resizeHandle:SetFrameLevel(DeathFeedWindow:GetFrameLevel() + 50)
 
 resizeHandle:SetScript("OnMouseDown", function()
-    DeathFeedWindow:StartSizing("BOTTOMRIGHT")
+    DeathFeedWindow:StartSizing("BOTTOM")
 end)
 
 resizeHandle:SetScript("OnMouseUp", function()
@@ -189,27 +195,27 @@ DeathFeedWindow:SetBackdropColor(0.05, 0.05, 0.05, 0.90)
 DeathFeedWindow:SetBackdropBorderColor(0.55, 0.55, 0.55, 1)
 
 local title = DeathFeedWindow:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-title:SetPoint("TOPLEFT", 8, -8)
+title:SetPoint("TOPLEFT", 7, -8)
 title:SetText("|cffcc4444Death Feed|r")
 
 function getHeaderOffset()
-    if not DeathFeedDB.hideHeaders then
-        return 31
+    if not DeathFeedDB.compactMode then
+        return 27
     end
 
     return 10
 end
 
-function getFrameChromeHeight(hideHeaders)
-    if hideHeaders == nil then
-        hideHeaders = DeathFeedDB.hideHeaders
+function getFrameChromeHeight(compactMode)
+    if compactMode == nil then
+        compactMode = DeathFeedDB.compactMode
     end
 
-    if not hideHeaders then
-        return 54
+    if not compactMode then
+        return 46
     end
 
-    return 30
+    return 29
 end
 
 function getMaxRows()
@@ -287,9 +293,9 @@ for i = 1, maxHistory do
     rowTexts[i] = {}
     rowTexts[i].time = makeColumn(DeathFeedWindow, 8, y, 35)
     rowTexts[i].level = makeColumn(DeathFeedWindow, 48, y, 22)
-    rowTexts[i].name = makeColumn(DeathFeedWindow, 78, y, 90)
-    rowTexts[i].killer = makeColumn(DeathFeedWindow, 180, y, 120)
-    rowTexts[i].zone = makeColumn(DeathFeedWindow, 315, y, 120)
+    rowTexts[i].name = makeColumn(DeathFeedWindow, 78, y, 80)
+    rowTexts[i].killer = makeColumn(DeathFeedWindow, 170, y, 160)
+    rowTexts[i].zone = makeColumn(DeathFeedWindow, 345, y, 160)
 end
 
 function updateLayout()
@@ -299,24 +305,17 @@ function updateLayout()
     local timeX = 8
     local levelX = 48
     local nameX = 78
-    local killerX = 180
-    local zoneX = 315
+    local killerX = 170
+    local zoneX = 345
 
     local nameWidth = width - nameX - rightPadding
     local killerWidth = 0
     local zoneWidth = 0
 
-    if not DeathFeedDB.hideKiller and not DeathFeedDB.hideZone then
-        nameWidth = 90
-        killerWidth = 120
-        zoneWidth = math.max(60, width - zoneX - rightPadding)
-    elseif not DeathFeedDB.hideKiller then
-        nameWidth = 90
-        killerWidth = math.max(80, width - killerX - rightPadding)
-    elseif not DeathFeedDB.hideZone then
-        nameWidth = 90
-        zoneX = 180
-        zoneWidth = math.max(80, width - zoneX - rightPadding)
+    if not DeathFeedDB.compactMode then
+        nameWidth = 80
+        killerWidth = 160
+        zoneWidth = 160
     end
 
     headerTexts.time:ClearAllPoints()
@@ -334,11 +333,11 @@ function updateLayout()
     headerTexts.zone:ClearAllPoints()
     headerTexts.zone:SetPoint("TOPLEFT", zoneX, -26)
 
-    headerTexts.time:SetShown(not DeathFeedDB.hideHeaders)
-    headerTexts.level:SetShown(not DeathFeedDB.hideHeaders)
-    headerTexts.name:SetShown(not DeathFeedDB.hideHeaders)
-    headerTexts.killer:SetShown(not DeathFeedDB.hideHeaders and not DeathFeedDB.hideKiller)
-    headerTexts.zone:SetShown(not DeathFeedDB.hideHeaders and not DeathFeedDB.hideZone)
+    headerTexts.time:SetShown(not DeathFeedDB.compactMode)
+    headerTexts.level:SetShown(not DeathFeedDB.compactMode)
+    headerTexts.name:SetShown(not DeathFeedDB.compactMode)
+    headerTexts.killer:SetShown(not DeathFeedDB.compactMode)
+    headerTexts.zone:SetShown(not DeathFeedDB.compactMode)
 
     for i = 1, maxHistory do
         local rowY = -getHeaderOffset() - (i * rowHeight)
@@ -367,8 +366,8 @@ function updateLayout()
         rowTexts[i].zone:SetPoint("TOPLEFT", zoneX, rowY)
         rowTexts[i].zone:SetWidth(zoneWidth)
 
-        rowTexts[i].killer:SetShown(not DeathFeedDB.hideKiller)
-        rowTexts[i].zone:SetShown(not DeathFeedDB.hideZone)
+        rowTexts[i].killer:SetShown(not DeathFeedDB.compactMode)
+        rowTexts[i].zone:SetShown(not DeathFeedDB.compactMode)
     end
 end
 
@@ -421,29 +420,29 @@ function updateRows(animated)
             rowTexts[i].level:Show()
             rowTexts[i].name:Show()
 
-            rowTexts[i].killer:SetShown(not DeathFeedDB.hideKiller)
-            rowTexts[i].zone:SetShown(not DeathFeedDB.hideZone)
+            rowTexts[i].killer:SetShown(not DeathFeedDB.compactMode)
+            rowTexts[i].zone:SetShown(not DeathFeedDB.compactMode)
 
             if animated and i == 1 and historyOffset == 0 then
                 rowTexts[i].time:SetAlpha(0)
                 rowTexts[i].level:SetAlpha(0)
                 rowTexts[i].name:SetAlpha(0)
-                if not DeathFeedDB.hideKiller then
+                if not DeathFeedDB.compactMode then
                     rowTexts[i].killer:SetAlpha(0)
                 end
 
-                if not DeathFeedDB.hideZone then
+                if not DeathFeedDB.compactMode then
                     rowTexts[i].zone:SetAlpha(0)
                 end
 
                 UIFrameFadeIn(rowTexts[i].time, 0.35, 0, 1)
                 UIFrameFadeIn(rowTexts[i].level, 0.35, 0, 1)
                 UIFrameFadeIn(rowTexts[i].name, 0.35, 0, 1)
-                if not DeathFeedDB.hideKiller then
+                if not DeathFeedDB.compactMode then
                     UIFrameFadeIn(rowTexts[i].killer, 0.35, 0, 1)
                 end
 
-                if not DeathFeedDB.hideZone then
+                if not DeathFeedDB.compactMode then
                     UIFrameFadeIn(rowTexts[i].zone, 0.35, 0, 1)
                 end
             else
