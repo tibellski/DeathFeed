@@ -99,6 +99,42 @@ if layoutVersion < 6 then
     layoutVersion = 6
 end
 
+if layoutVersion < 7 then
+    if DeathFeedDB.width == 420 then
+        DeathFeedDB.width = 413
+    end
+
+    if DeathFeedDB.fullWidth == 420 then
+        DeathFeedDB.fullWidth = 413
+    end
+
+    layoutVersion = 7
+end
+
+if layoutVersion < 8 then
+    if DeathFeedDB.width == 413 then
+        DeathFeedDB.width = 410
+    end
+
+    if DeathFeedDB.fullWidth == 413 then
+        DeathFeedDB.fullWidth = 410
+    end
+
+    layoutVersion = 8
+end
+
+if layoutVersion < 9 then
+    if DeathFeedDB.width == 410 then
+        DeathFeedDB.width = 400
+    end
+
+    if DeathFeedDB.fullWidth == 410 then
+        DeathFeedDB.fullWidth = 400
+    end
+
+    layoutVersion = 9
+end
+
 DeathFeedDB.layoutVersion = layoutVersion
 
 copyDefaults(defaults, DeathFeedDB)
@@ -146,8 +182,8 @@ local function setWindowHeightKeepingTop(height)
 end
 
 function updateResizeBounds(previousCompactMode)
-    local compactWidth = 158
-    local fullMinWidth = 420
+    local compactWidth = 145
+    local fullMinWidth = 400
     local maxWidth = 650
     local minWidth = compactWidth
     local minHeight = getFrameChromeHeight() + (5 * rowHeight)
@@ -228,8 +264,31 @@ resizeHandle:SetHighlightTexture("Interface\\ChatFrame\\UI-ChatIM-SizeGrabber-Hi
 resizeHandle:SetPushedTexture("Interface\\ChatFrame\\UI-ChatIM-SizeGrabber-Down")
 
 resizeHandle:SetFrameLevel(DeathFeedWindow:GetFrameLevel() + 50)
+resizeHandle:SetAlpha(0)
 
-resizeHandle:SetScript("OnMouseDown", function()
+local isResizing = false
+local resizeHandleFadeDuration = 0.15
+
+resizeHandle:SetScript("OnUpdate", function(self, elapsed)
+    local targetAlpha = 0
+
+    if isResizing or DeathFeedWindow:IsMouseOver() then
+        targetAlpha = 1
+    end
+
+    local alpha = self:GetAlpha()
+
+    if alpha < targetAlpha then
+        self:SetAlpha(math.min(targetAlpha, alpha + elapsed / resizeHandleFadeDuration))
+    elseif alpha > targetAlpha then
+        self:SetAlpha(math.max(targetAlpha, alpha - elapsed / resizeHandleFadeDuration))
+    end
+end)
+
+resizeHandle:SetScript("OnMouseDown", function(self)
+    isResizing = true
+    self:SetAlpha(1)
+
     if DeathFeedDB.compactMode then
         DeathFeedWindow:StartSizing("BOTTOM")
     else
@@ -237,7 +296,8 @@ resizeHandle:SetScript("OnMouseDown", function()
     end
 end)
 
-resizeHandle:SetScript("OnMouseUp", function()
+resizeHandle:SetScript("OnMouseUp", function(self)
+    isResizing = false
     DeathFeedWindow:StopMovingOrSizing()
 
     DeathFeedDB.width = DeathFeedWindow:GetWidth()
@@ -329,6 +389,7 @@ headerTexts.zone = makeHeader("|cff888888Zone|r")
 
 local rowFrames = {}
 local rowTexts = {}
+local tooltipFadeDuration = 0.15
 
 for i = 1, maxHistory do
     local y = -getHeaderOffset() - (i * rowHeight)
@@ -362,20 +423,32 @@ for i = 1, maxHistory do
             GameTooltip:AddLine("Level: " .. rowLevel, 1, 1, 1)
             GameTooltip:AddLine("Killed by: " .. rowKiller, 1, 0.45, 0.45)
             GameTooltip:AddLine("Zone: " .. rowZone, 0.8, 0.8, 0.8)
+
+            if UIFrameFadeRemoveFrame then
+                UIFrameFadeRemoveFrame(GameTooltip)
+            end
+
+            GameTooltip:SetAlpha(0)
             GameTooltip:Show()
+            UIFrameFadeIn(GameTooltip, tooltipFadeDuration, 0, 1)
         end
     end)
 
     rowFrames[i]:SetScript("OnLeave", function()
+        if UIFrameFadeRemoveFrame then
+            UIFrameFadeRemoveFrame(GameTooltip)
+        end
+
+        GameTooltip:SetAlpha(1)
         GameTooltip:Hide()
     end)
 
     rowTexts[i] = {}
     rowTexts[i].time = makeColumn(DeathFeedWindow, 8, y, 35)
     rowTexts[i].level = makeColumn(DeathFeedWindow, 48, y, 22)
-    rowTexts[i].name = makeColumn(DeathFeedWindow, 78, y, 80)
-    rowTexts[i].killer = makeColumn(DeathFeedWindow, 170, y, 120)
-    rowTexts[i].zone = makeColumn(DeathFeedWindow, 295, y, 120)
+    rowTexts[i].name = makeColumn(DeathFeedWindow, 75, y, 70)
+    rowTexts[i].killer = makeColumn(DeathFeedWindow, 150, y, 120)
+    rowTexts[i].zone = makeColumn(DeathFeedWindow, 275, y, 120)
 end
 
 function updateLayout()
@@ -385,16 +458,16 @@ function updateLayout()
 
     local timeX = 8
     local levelX = 48
-    local nameX = 78
-    local killerX = 170
+    local nameX = 75
+    local killerX = 150
     local zoneX = killerX
 
-    local nameWidth = 80
+    local nameWidth = 70
     local killerWidth = 0
     local zoneWidth = 0
 
     if not DeathFeedDB.compactMode then
-        nameWidth = 80
+        nameWidth = 70
         killerWidth = (width - killerX - columnGap - zoneRightMargin) / 2
         zoneWidth = killerWidth
         zoneX = killerX + killerWidth + columnGap
