@@ -1,5 +1,7 @@
 DeathFeedDB = DeathFeedDB or {}
 
+local newDeathFadeDuration = 0.6
+
 local defaults = {
     point = "CENTER",
     relativePoint = "CENTER",
@@ -42,6 +44,62 @@ DeathFeedDB.showHeaders = nil
 DeathFeedDB.hideKiller = nil
 DeathFeedDB.hideZone = nil
 DeathFeedDB.hideHeaders = nil
+
+local layoutVersion = tonumber(DeathFeedDB.layoutVersion) or 0
+
+if layoutVersion < 1 then
+    if DeathFeedDB.width == 517 then
+        DeathFeedDB.width = 477
+    end
+
+    layoutVersion = 1
+end
+
+if layoutVersion < 2 then
+    if DeathFeedDB.width == 477 then
+        DeathFeedDB.width = 465
+    end
+
+    layoutVersion = 2
+end
+
+if layoutVersion < 4 then
+    if DeathFeedDB.width == 465 then
+        DeathFeedDB.width = 425
+    end
+
+    if DeathFeedDB.fullWidth == 465 then
+        DeathFeedDB.fullWidth = 425
+    end
+
+    layoutVersion = 4
+end
+
+if layoutVersion < 5 then
+    if DeathFeedDB.width == 425 then
+        DeathFeedDB.width = 415
+    end
+
+    if DeathFeedDB.fullWidth == 425 then
+        DeathFeedDB.fullWidth = 415
+    end
+
+    layoutVersion = 5
+end
+
+if layoutVersion < 6 then
+    if DeathFeedDB.width == 415 then
+        DeathFeedDB.width = 420
+    end
+
+    if DeathFeedDB.fullWidth == 415 then
+        DeathFeedDB.fullWidth = 420
+    end
+
+    layoutVersion = 6
+end
+
+DeathFeedDB.layoutVersion = layoutVersion
 
 copyDefaults(defaults, DeathFeedDB)
 
@@ -88,18 +146,32 @@ local function setWindowHeightKeepingTop(height)
 end
 
 function updateResizeBounds(previousCompactMode)
-    local minWidth = 180
+    local compactWidth = 158
+    local fullMinWidth = 420
+    local maxWidth = 650
+    local minWidth = compactWidth
     local minHeight = getFrameChromeHeight() + (5 * rowHeight)
 
     if not DeathFeedDB.compactMode then
-        minWidth = 517
+        minWidth = fullMinWidth
     end
 
     if DeathFeedWindow.SetResizeBounds then
-        DeathFeedWindow:SetResizeBounds(minWidth, minHeight, 650, 500)
+        DeathFeedWindow:SetResizeBounds(minWidth, minHeight, maxWidth, 500)
     end
 
     if previousCompactMode ~= nil and previousCompactMode ~= DeathFeedDB.compactMode then
+        local width = minWidth
+
+        if DeathFeedDB.compactMode then
+            DeathFeedDB.fullWidth = math.max(fullMinWidth, DeathFeedWindow:GetWidth())
+        else
+            width = math.max(fullMinWidth, math.min(maxWidth, tonumber(DeathFeedDB.fullWidth) or fullMinWidth))
+        end
+
+        DeathFeedWindow:SetWidth(width)
+        DeathFeedDB.width = width
+    elseif DeathFeedDB.compactMode and DeathFeedWindow:GetWidth() ~= minWidth then
         DeathFeedWindow:SetWidth(minWidth)
         DeathFeedDB.width = minWidth
     elseif DeathFeedWindow:GetWidth() < minWidth then
@@ -158,7 +230,11 @@ resizeHandle:SetPushedTexture("Interface\\ChatFrame\\UI-ChatIM-SizeGrabber-Down"
 resizeHandle:SetFrameLevel(DeathFeedWindow:GetFrameLevel() + 50)
 
 resizeHandle:SetScript("OnMouseDown", function()
-    DeathFeedWindow:StartSizing("BOTTOM")
+    if DeathFeedDB.compactMode then
+        DeathFeedWindow:StartSizing("BOTTOM")
+    else
+        DeathFeedWindow:StartSizing("BOTTOMRIGHT")
+    end
 end)
 
 resizeHandle:SetScript("OnMouseUp", function()
@@ -174,6 +250,10 @@ end)
 DeathFeedWindow:SetScript("OnSizeChanged", function()
     DeathFeedDB.width = DeathFeedWindow:GetWidth()
     DeathFeedDB.height = DeathFeedWindow:GetHeight()
+
+    if not DeathFeedDB.compactMode then
+        DeathFeedDB.fullWidth = DeathFeedDB.width
+    end
 
     updateLayout()
     updateRows(false)
@@ -294,28 +374,30 @@ for i = 1, maxHistory do
     rowTexts[i].time = makeColumn(DeathFeedWindow, 8, y, 35)
     rowTexts[i].level = makeColumn(DeathFeedWindow, 48, y, 22)
     rowTexts[i].name = makeColumn(DeathFeedWindow, 78, y, 80)
-    rowTexts[i].killer = makeColumn(DeathFeedWindow, 170, y, 160)
-    rowTexts[i].zone = makeColumn(DeathFeedWindow, 345, y, 160)
+    rowTexts[i].killer = makeColumn(DeathFeedWindow, 170, y, 120)
+    rowTexts[i].zone = makeColumn(DeathFeedWindow, 295, y, 120)
 end
 
 function updateLayout()
     local width = DeathFeedWindow:GetWidth()
-    local rightPadding = 12
+    local columnGap = 5
+    local zoneRightMargin = 5
 
     local timeX = 8
     local levelX = 48
     local nameX = 78
     local killerX = 170
-    local zoneX = 345
+    local zoneX = killerX
 
-    local nameWidth = width - nameX - rightPadding
+    local nameWidth = 80
     local killerWidth = 0
     local zoneWidth = 0
 
     if not DeathFeedDB.compactMode then
         nameWidth = 80
-        killerWidth = 160
-        zoneWidth = 160
+        killerWidth = (width - killerX - columnGap - zoneRightMargin) / 2
+        zoneWidth = killerWidth
+        zoneX = killerX + killerWidth + columnGap
     end
 
     headerTexts.time:ClearAllPoints()
@@ -435,15 +517,15 @@ function updateRows(animated)
                     rowTexts[i].zone:SetAlpha(0)
                 end
 
-                UIFrameFadeIn(rowTexts[i].time, 0.35, 0, 1)
-                UIFrameFadeIn(rowTexts[i].level, 0.35, 0, 1)
-                UIFrameFadeIn(rowTexts[i].name, 0.35, 0, 1)
+                UIFrameFadeIn(rowTexts[i].time, newDeathFadeDuration, 0, 1)
+                UIFrameFadeIn(rowTexts[i].level, newDeathFadeDuration, 0, 1)
+                UIFrameFadeIn(rowTexts[i].name, newDeathFadeDuration, 0, 1)
                 if not DeathFeedDB.compactMode then
-                    UIFrameFadeIn(rowTexts[i].killer, 0.35, 0, 1)
+                    UIFrameFadeIn(rowTexts[i].killer, newDeathFadeDuration, 0, 1)
                 end
 
                 if not DeathFeedDB.compactMode then
-                    UIFrameFadeIn(rowTexts[i].zone, 0.35, 0, 1)
+                    UIFrameFadeIn(rowTexts[i].zone, newDeathFadeDuration, 0, 1)
                 end
             else
                 rowTexts[i].time:SetAlpha(1)

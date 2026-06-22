@@ -2,6 +2,14 @@ local function getMinimumLevel()
     return tonumber(DeathFeedDB.minimumLevel) or 10
 end
 
+local function shouldShowRow(row, minimumLevel)
+    if row.isGuildDeath == true or isGuildMember(row.name) then
+        return true
+    end
+
+    return (tonumber(row.level) or 0) >= minimumLevel
+end
+
 function getVisibleRows()
     local visibleRows = {}
     local maxRows = getMaxRows()
@@ -9,9 +17,7 @@ function getVisibleRows()
     local minimumLevel = getMinimumLevel()
 
     for _, row in ipairs(DeathFeedDB.history) do
-        local level = tonumber(row.level) or 0
-
-        if level >= minimumLevel then
+        if shouldShowRow(row, minimumLevel) then
             if visibleIndex > historyOffset and #visibleRows < maxRows then
                 table.insert(visibleRows, row)
             end
@@ -28,9 +34,7 @@ function getVisibleRowCount()
     local minimumLevel = getMinimumLevel()
 
     for _, row in ipairs(DeathFeedDB.history) do
-        local level = tonumber(row.level) or 0
-
-        if level >= minimumLevel then
+        if shouldShowRow(row, minimumLevel) then
             count = count + 1
         end
     end
@@ -39,20 +43,24 @@ function getVisibleRowCount()
 end
 
 function addDeathMessage(death)
-    table.insert(DeathFeedDB.history, 1, {
+    local isGuildDeath = isGuildMember(death.name)
+    local row = {
         time = date("%H:%M"),
         name = death.name,
         level = death.level,
         killer = death.killer,
-        zone = death.zone
-    })
+        zone = death.zone,
+        isGuildDeath = isGuildDeath
+    }
+
+    table.insert(DeathFeedDB.history, 1, row)
 
     trimHistory()
 
-    if DeathFeedDB.playGuildSound and isGuildMember(death.name) then
+    if DeathFeedDB.playGuildSound and isGuildDeath then
         PlaySound(1172, "Master")
     end
 
     historyOffset = 0
-    updateRows(true)
+    updateRows(shouldShowRow(row, getMinimumLevel()))
 end
