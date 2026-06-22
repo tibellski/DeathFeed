@@ -135,6 +135,18 @@ if layoutVersion < 9 then
     layoutVersion = 9
 end
 
+if layoutVersion < 10 then
+    if DeathFeedDB.width == 400 then
+        DeathFeedDB.width = 410
+    end
+
+    if DeathFeedDB.fullWidth == 400 then
+        DeathFeedDB.fullWidth = 410
+    end
+
+    layoutVersion = 10
+end
+
 DeathFeedDB.layoutVersion = layoutVersion
 
 copyDefaults(defaults, DeathFeedDB)
@@ -182,8 +194,8 @@ local function setWindowHeightKeepingTop(height)
 end
 
 function updateResizeBounds(previousCompactMode)
-    local compactWidth = 145
-    local fullMinWidth = 400
+    local compactWidth = 155
+    local fullMinWidth = 410
     local maxWidth = 650
     local minWidth = compactWidth
     local minHeight = getFrameChromeHeight() + (5 * rowHeight)
@@ -340,7 +352,7 @@ title:SetText("|cffcc4444Death Feed|r")
 
 function getHeaderOffset()
     if not DeathFeedDB.compactMode then
-        return 27
+        return 25
     end
 
     return 10
@@ -352,7 +364,7 @@ function getFrameChromeHeight(compactMode)
     end
 
     if not compactMode then
-        return 46
+        return 44
     end
 
     return 29
@@ -446,9 +458,9 @@ for i = 1, maxHistory do
     rowTexts[i] = {}
     rowTexts[i].time = makeColumn(DeathFeedWindow, 8, y, 35)
     rowTexts[i].level = makeColumn(DeathFeedWindow, 48, y, 22)
-    rowTexts[i].name = makeColumn(DeathFeedWindow, 75, y, 70)
-    rowTexts[i].killer = makeColumn(DeathFeedWindow, 150, y, 120)
-    rowTexts[i].zone = makeColumn(DeathFeedWindow, 275, y, 120)
+    rowTexts[i].name = makeColumn(DeathFeedWindow, 75, y, 80)
+    rowTexts[i].killer = makeColumn(DeathFeedWindow, 160, y, 120)
+    rowTexts[i].zone = makeColumn(DeathFeedWindow, 285, y, 120)
 end
 
 function updateLayout()
@@ -459,34 +471,35 @@ function updateLayout()
     local timeX = 8
     local levelX = 48
     local nameX = 75
-    local killerX = 150
+    local killerX = 160
     local zoneX = killerX
+    local headerY = -24
 
-    local nameWidth = 70
+    local nameWidth = 80
     local killerWidth = 0
     local zoneWidth = 0
 
     if not DeathFeedDB.compactMode then
-        nameWidth = 70
+        nameWidth = 80
         killerWidth = (width - killerX - columnGap - zoneRightMargin) / 2
         zoneWidth = killerWidth
         zoneX = killerX + killerWidth + columnGap
     end
 
     headerTexts.time:ClearAllPoints()
-    headerTexts.time:SetPoint("TOPLEFT", timeX, -26)
+    headerTexts.time:SetPoint("TOPLEFT", timeX, headerY)
 
     headerTexts.level:ClearAllPoints()
-    headerTexts.level:SetPoint("TOPLEFT", levelX, -26)
+    headerTexts.level:SetPoint("TOPLEFT", levelX, headerY)
 
     headerTexts.name:ClearAllPoints()
-    headerTexts.name:SetPoint("TOPLEFT", nameX, -26)
+    headerTexts.name:SetPoint("TOPLEFT", nameX, headerY)
 
     headerTexts.killer:ClearAllPoints()
-    headerTexts.killer:SetPoint("TOPLEFT", killerX, -26)
+    headerTexts.killer:SetPoint("TOPLEFT", killerX, headerY)
 
     headerTexts.zone:ClearAllPoints()
-    headerTexts.zone:SetPoint("TOPLEFT", zoneX, -26)
+    headerTexts.zone:SetPoint("TOPLEFT", zoneX, headerY)
 
     headerTexts.time:SetShown(not DeathFeedDB.compactMode)
     headerTexts.level:SetShown(not DeathFeedDB.compactMode)
