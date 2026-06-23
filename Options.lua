@@ -37,33 +37,6 @@ hideChatCheckbox:SetScript("OnClick", function(self)
 end)
 
     -------------------------------------------------------------------
-    -- Compact mode
-    -------------------------------------------------------------------
-
-local compactModeCheckbox = CreateFrame(
-    "CheckButton",
-    nil,
-    DeathFeedOptionsPanel,
-    "InterfaceOptionsCheckButtonTemplate"
-)
-
-compactModeCheckbox:SetPoint("TOPLEFT", hideChatCheckbox, "BOTTOMLEFT", 0, -8)
-compactModeCheckbox.Text:SetText("Compact mode")
-
-compactModeCheckbox:SetScript("OnShow", function(self)
-    self:SetChecked(DeathFeedDB.compactMode)
-end)
-
-compactModeCheckbox:SetScript("OnClick", function(self)
-    local previousCompactMode = DeathFeedDB.compactMode
-    DeathFeedDB.compactMode = self:GetChecked()
-
-    updateResizeBounds(previousCompactMode)
-    updateLayout()
-    updateRows(false)
-end)
-
-    -------------------------------------------------------------------
     -- Sound
     -------------------------------------------------------------------
 
@@ -74,7 +47,7 @@ local playSoundCheckbox = CreateFrame(
     "InterfaceOptionsCheckButtonTemplate"
 )
 
-playSoundCheckbox:SetPoint("TOPLEFT", compactModeCheckbox, "BOTTOMLEFT", 0, -8)
+playSoundCheckbox:SetPoint("TOPLEFT", hideChatCheckbox, "BOTTOMLEFT", 0, -8)
 playSoundCheckbox.Text:SetText("Play sound on guild death")
 
 playSoundCheckbox:SetScript("OnShow", function(self)
@@ -83,6 +56,36 @@ end)
 
 playSoundCheckbox:SetScript("OnClick", function(self)
     DeathFeedDB.playGuildSound = self:GetChecked()
+end)
+
+    -------------------------------------------------------------------
+    -- Minimap
+    -------------------------------------------------------------------
+
+local hideMinimapCheckbox = CreateFrame(
+    "CheckButton",
+    nil,
+    DeathFeedOptionsPanel,
+    "InterfaceOptionsCheckButtonTemplate"
+)
+
+hideMinimapCheckbox:SetPoint("TOPLEFT", playSoundCheckbox, "BOTTOMLEFT", 0, -8)
+hideMinimapCheckbox.Text:SetText("Hide minimap icon")
+
+hideMinimapCheckbox:SetScript("OnShow", function(self)
+    self:SetChecked(DeathFeedDB.minimap.hide)
+end)
+
+hideMinimapCheckbox:SetScript("OnClick", function(self)
+    DeathFeedDB.minimap.hide = self:GetChecked()
+
+    if ldbIcon then
+        if DeathFeedDB.minimap.hide then
+            ldbIcon:Hide("DeathFeed")
+        else
+            ldbIcon:Show("DeathFeed")
+        end
+    end
 end)
 
 -------------------------------------------------------------------
@@ -95,7 +98,7 @@ local minimumLevelLabel = DeathFeedOptionsPanel:CreateFontString(
     "GameFontNormal"
 )
 
-minimumLevelLabel:SetPoint("TOPLEFT", playSoundCheckbox, "BOTTOMLEFT", 0, -18)
+minimumLevelLabel:SetPoint("TOPLEFT", hideMinimapCheckbox, "BOTTOMLEFT", 0, -18)
 minimumLevelLabel:SetText("Minimum level to display")
 
 local minimumLevelDropdown = CreateFrame(
@@ -151,36 +154,6 @@ minimumLevelDropdown:SetScript("OnShow", function()
 end)
 
     -------------------------------------------------------------------
-    -- Minimap
-    -------------------------------------------------------------------
-
-local hideMinimapCheckbox = CreateFrame(
-    "CheckButton",
-    nil,
-    DeathFeedOptionsPanel,
-    "InterfaceOptionsCheckButtonTemplate"
-)
-
-hideMinimapCheckbox:SetPoint("TOPLEFT", minimumLevelDropdown, "BOTTOMLEFT", 15, -10)
-hideMinimapCheckbox.Text:SetText("Hide minimap icon")
-
-hideMinimapCheckbox:SetScript("OnShow", function(self)
-    self:SetChecked(DeathFeedDB.minimap.hide)
-end)
-
-hideMinimapCheckbox:SetScript("OnClick", function(self)
-    DeathFeedDB.minimap.hide = self:GetChecked()
-
-    if ldbIcon then
-        if DeathFeedDB.minimap.hide then
-            ldbIcon:Hide("DeathFeed")
-        else
-            ldbIcon:Show("DeathFeed")
-        end
-    end
-end)
-
-    -------------------------------------------------------------------
     -- Clear
     -------------------------------------------------------------------
 
@@ -192,7 +165,7 @@ local clearButton = CreateFrame(
 )
 
 clearButton:SetSize(120, 24)
-clearButton:SetPoint("TOPLEFT", hideMinimapCheckbox, "BOTTOMLEFT", 0, -16)
+clearButton:SetPoint("TOPLEFT", minimumLevelDropdown, "BOTTOMLEFT", 15, -10)
 clearButton:SetText("Clear history")
 
 clearButton:SetScript("OnClick", function()
