@@ -418,11 +418,16 @@ headerTexts.zone = makeHeader("|cff888888Zone|r")
 local rowFrames = {}
 local rowTexts = {}
 local tooltipFadeDuration = 0.15
+local function makeIcon(texture, width, height)
+    width = width or 12
+    height = height or width
+    return "|T" .. texture .. ":" .. height .. ":" .. width .. ":0:0|t"
+end
+
 local mobClassificationMarkers = {
-    ["Elite"] = "|cffffd100(E)|r",
-    ["Rare Elite"] = "|cffffd100(|r|cffc0c0c0RE|r|cffffd100)|r",
-    ["World Boss"] = "|cff55ff55(WB)|r",
-    ["Rare"] = "|cffc0c0c0(R)|r"
+    ["Elite"] = makeIcon("Interface\\TargetingFrame\\UI-RaidTargetingIcon_1"),
+    ["Rare Elite"] = makeIcon("Interface\\TargetingFrame\\UI-RaidTargetingIcon_1"),
+    ["World Boss"] = makeIcon("Interface\\TargetingFrame\\UI-RaidTargetingIcon_1")
 }
 
 for i = 1, maxHistory do
@@ -628,15 +633,15 @@ function updateRows(animated)
                 rowTexts[i].killer:SetText(markerText .. "|cffff7777" .. rowKiller .. "|r")
             end
 
-            local zonePrefix = ""
+            local zoneColor = "|cffcccccc"
 
             if isRaidZone(rowZone) then
-                zonePrefix = "|cffff3333(R)|r "
+                zoneColor = "|cffff3333"
             elseif isDungeonZone(rowZone) then
-                zonePrefix = "|cffb266ff(D)|r "
+                zoneColor = "|cffb266ff"
             end
 
-            rowTexts[i].zone:SetText(zonePrefix .. "|cffcccccc" .. rowZone .. "|r")
+            rowTexts[i].zone:SetText(zoneColor .. rowZone .. "|r")
 
             rowTexts[i].time:Show()
             rowTexts[i].level:Show()
