@@ -2,7 +2,7 @@
 ## Title: DeathFeed
 ## Notes: Compact Hardcore death tracker
 ## Author: Linus Tibell
-## Version: 4.1.0
+## Version: 4.2.0
 ## SavedVariables: DeathFeedDB
 ## IconTexture: Interface\Icons\INV_Misc_Bone_Skull_02
 
