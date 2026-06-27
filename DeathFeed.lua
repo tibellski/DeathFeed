@@ -418,6 +418,41 @@ headerTexts.zone = makeHeader("|cff888888Zone|r")
 local rowFrames = {}
 local rowTexts = {}
 local tooltipFadeDuration = 0.15
+local tooltipLabelColor = "|cff888888"
+local colorReset = "|r"
+
+local function getNameColor(name, row)
+    if row and (row.isGuildDeath == true or isGuildMember(name)) then
+        return 0.33, 1, 0.33
+    end
+
+    return 0.87, 0.87, 0.87
+end
+
+local function colorKillerText(killer)
+    if killer == "Fall damage" then
+        return "|cff996633" .. killer .. colorReset
+    elseif killer == "Drowning" then
+        return "|cff3399ff" .. killer .. colorReset
+    elseif killer == "Lava" then
+        return "|cffffaa00" .. killer .. colorReset
+    elseif killer == "Fatigue" then
+        return "|cff66ccff" .. killer .. colorReset
+    end
+
+    return "|cffff7777" .. killer .. colorReset
+end
+
+local function colorZoneText(zone)
+    if isRaidZone(zone) then
+        return "|cffff3333" .. zone .. colorReset
+    elseif isDungeonZone(zone) then
+        return "|cffb266ff" .. zone .. colorReset
+    end
+
+    return "|cffdddddd" .. zone .. colorReset
+end
+
 local function makeIcon(texture, width, height)
     width = width or 12
     height = height or width
@@ -457,17 +492,21 @@ for i = 1, maxHistory do
             local rowKiller = tostring(self.row.killer or "Unknown")
             local rowZone = tostring(self.row.zone or "Unknown")
             local mobClassification = self.row.mobClassification or getMobClassification(rowKiller)
+            local nameR, nameG, nameB = getNameColor(rowName, self.row)
+            local marker = mobClassificationMarkers[mobClassification]
+            local markerText = ""
 
-            GameTooltip:SetOwner(self, "ANCHOR_CURSOR")
-            GameTooltip:AddLine(rowName)
-            GameTooltip:AddLine("Level: " .. rowLevel, 1, 1, 1)
-            GameTooltip:AddLine("Killed by: " .. rowKiller, 1, 0.45, 0.45)
-
-            if mobClassification then
-                GameTooltip:AddLine("Classification: " .. mobClassification, 1, 0.75, 0.25)
+            if marker then
+                markerText = marker .. " "
             end
 
-            GameTooltip:AddLine("Zone: " .. rowZone, 0.8, 0.8, 0.8)
+            GameTooltip:SetOwner(self, "ANCHOR_CURSOR")
+            GameTooltip:ClearLines()
+            GameTooltip:AddLine(rowName, nameR, nameG, nameB)
+            GameTooltip:AddLine(tooltipLabelColor .. "Level: " .. colorReset .. colorLevel(rowLevel))
+            GameTooltip:AddLine(tooltipLabelColor .. "Killed by: " .. colorReset .. markerText .. colorKillerText(rowKiller))
+
+            GameTooltip:AddLine(tooltipLabelColor .. "Zone: " .. colorReset .. colorZoneText(rowZone))
 
             if UIFrameFadeRemoveFrame then
                 UIFrameFadeRemoveFrame(GameTooltip)
@@ -608,7 +647,7 @@ function updateRows(animated)
 
             rowTexts[i].level:SetText(colorLevel(rowLevel))
 
-            if isGuildMember(rowName) then
+            if row.isGuildDeath == true or isGuildMember(rowName) then
                 rowTexts[i].name:SetText("|cff55ff55" .. rowName .. "|r")
             else
                 rowTexts[i].name:SetText("|cffdddddd" .. rowName .. "|r")

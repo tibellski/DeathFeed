@@ -1,5 +1,5 @@
 ## Interface: 11507
-## Title: DeathFeed
+## Title: |cffcc4444DeathFeed|r
 ## Notes: Compact Hardcore death tracker
 ## Author: Linus Tibell
 ## Version: 4.2.0

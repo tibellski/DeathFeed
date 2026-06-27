@@ -1,22 +1,67 @@
+local coloredAddonName = "|cffcc4444DeathFeed|r"
+
 DeathFeedOptionsPanel = CreateFrame("Frame", "DeathFeedOptionsPanel")
-DeathFeedOptionsPanel.name = "DeathFeed"
+DeathFeedOptionsPanel.name = coloredAddonName
 
 local optionsTitle = DeathFeedOptionsPanel:CreateFontString(nil, "ARTWORK", "GameFontNormalLarge")
 optionsTitle:SetPoint("TOPLEFT", 16, -16)
-optionsTitle:SetText("DeathFeed")
+optionsTitle:SetText(coloredAddonName)
 
 DeathFeedOptionsCategory = nil
 
 if Settings and Settings.RegisterCanvasLayoutCategory then
-    DeathFeedOptionsCategory = Settings.RegisterCanvasLayoutCategory(DeathFeedOptionsPanel, "DeathFeed")
+    DeathFeedOptionsCategory = Settings.RegisterCanvasLayoutCategory(DeathFeedOptionsPanel, coloredAddonName)
     Settings.RegisterAddOnCategory(DeathFeedOptionsCategory)
 elseif InterfaceOptions_AddCategory then
     InterfaceOptions_AddCategory(DeathFeedOptionsPanel)
 end
 
-    -------------------------------------------------------------------
-    -- Chat
-    -------------------------------------------------------------------
+local sectionSpacing = -22
+local controlSpacing = -8
+local contentInset = 8
+
+local function makeDescription(parent, text)
+    local description = parent:CreateFontString(nil, "ARTWORK", "GameFontHighlightSmall")
+    description:SetText("|cff888888" .. text .. "|r")
+    description:SetJustifyH("LEFT")
+    return description
+end
+
+local optionsSubtitle = makeDescription(
+    DeathFeedOptionsPanel,
+    "Tune the feed behavior without changing how deaths are parsed."
+)
+
+optionsSubtitle:SetPoint("TOPLEFT", optionsTitle, "BOTTOMLEFT", 0, -6)
+optionsSubtitle:SetWidth(560)
+
+local function makeSection(text, relativeTo, offsetX)
+    local section = DeathFeedOptionsPanel:CreateFontString(nil, "ARTWORK", "GameFontNormal")
+
+    if relativeTo then
+        section:SetPoint("TOPLEFT", relativeTo, "BOTTOMLEFT", offsetX or -contentInset, sectionSpacing)
+    else
+        section:SetPoint("TOPLEFT", optionsSubtitle, "BOTTOMLEFT", 0, -24)
+    end
+
+    section:SetText(text)
+    return section
+end
+
+local function makeCheckbox(name, text, relativeTo, offsetY)
+    local checkbox = CreateFrame(
+        "CheckButton",
+        name,
+        DeathFeedOptionsPanel,
+        "InterfaceOptionsCheckButtonTemplate"
+    )
+
+    checkbox:SetPoint("TOPLEFT", relativeTo, "BOTTOMLEFT", contentInset, offsetY or controlSpacing)
+    checkbox.Text:SetText(text)
+    return checkbox
+end
+
+local chatSection = makeSection("Chat", nil)
 
 local hideChatCheckbox = CreateFrame(
     "CheckButton",
@@ -25,7 +70,7 @@ local hideChatCheckbox = CreateFrame(
     "InterfaceOptionsCheckButtonTemplate"
 )
 
-hideChatCheckbox:SetPoint("TOPLEFT", optionsTitle, "BOTTOMLEFT", 0, -16)
+hideChatCheckbox:SetPoint("TOPLEFT", chatSection, "BOTTOMLEFT", contentInset, controlSpacing)
 hideChatCheckbox.Text:SetText("Hide original HardcoreDeaths chat")
 
 hideChatCheckbox:SetScript("OnShow", function(self)
@@ -36,19 +81,9 @@ hideChatCheckbox:SetScript("OnClick", function(self)
     DeathFeedDB.hideOriginalChat = self:GetChecked()
 end)
 
-    -------------------------------------------------------------------
-    -- Sound
-    -------------------------------------------------------------------
+local feedSection = makeSection("Feed", hideChatCheckbox)
 
-local playSoundCheckbox = CreateFrame(
-    "CheckButton",
-    nil,
-    DeathFeedOptionsPanel,
-    "InterfaceOptionsCheckButtonTemplate"
-)
-
-playSoundCheckbox:SetPoint("TOPLEFT", hideChatCheckbox, "BOTTOMLEFT", 0, -8)
-playSoundCheckbox.Text:SetText("Play sound on guild death")
+local playSoundCheckbox = makeCheckbox(nil, "Play sound on guild death", feedSection)
 
 playSoundCheckbox:SetScript("OnShow", function(self)
     self:SetChecked(DeathFeedDB.playGuildSound)
@@ -58,47 +93,13 @@ playSoundCheckbox:SetScript("OnClick", function(self)
     DeathFeedDB.playGuildSound = self:GetChecked()
 end)
 
-    -------------------------------------------------------------------
-    -- Minimap
-    -------------------------------------------------------------------
-
-local hideMinimapCheckbox = CreateFrame(
-    "CheckButton",
-    nil,
-    DeathFeedOptionsPanel,
-    "InterfaceOptionsCheckButtonTemplate"
-)
-
-hideMinimapCheckbox:SetPoint("TOPLEFT", playSoundCheckbox, "BOTTOMLEFT", 0, -8)
-hideMinimapCheckbox.Text:SetText("Hide minimap icon")
-
-hideMinimapCheckbox:SetScript("OnShow", function(self)
-    self:SetChecked(DeathFeedDB.minimap.hide)
-end)
-
-hideMinimapCheckbox:SetScript("OnClick", function(self)
-    DeathFeedDB.minimap.hide = self:GetChecked()
-
-    if ldbIcon then
-        if DeathFeedDB.minimap.hide then
-            ldbIcon:Hide("DeathFeed")
-        else
-            ldbIcon:Show("DeathFeed")
-        end
-    end
-end)
-
--------------------------------------------------------------------
--- Minimum level
--------------------------------------------------------------------
-
 local minimumLevelLabel = DeathFeedOptionsPanel:CreateFontString(
     nil,
     "ARTWORK",
     "GameFontNormal"
 )
 
-minimumLevelLabel:SetPoint("TOPLEFT", hideMinimapCheckbox, "BOTTOMLEFT", 0, -18)
+minimumLevelLabel:SetPoint("TOPLEFT", playSoundCheckbox, "BOTTOMLEFT", contentInset, -14)
 minimumLevelLabel:SetText("Minimum level to display")
 
 local minimumLevelDropdown = CreateFrame(
@@ -153,9 +154,37 @@ minimumLevelDropdown:SetScript("OnShow", function()
     updateMinimumLevelDropdownText()
 end)
 
-    -------------------------------------------------------------------
-    -- Clear
-    -------------------------------------------------------------------
+local minimumLevelHelp = DeathFeedOptionsPanel:CreateFontString(
+    nil,
+    "ARTWORK",
+    "GameFontHighlightSmall"
+)
+
+minimumLevelHelp:SetPoint("TOPLEFT", minimumLevelDropdown, "BOTTOMLEFT", 15, -2)
+minimumLevelHelp:SetText("|cff888888Guild deaths are always shown.|r")
+
+local minimapSection = makeSection("Minimap", minimumLevelHelp, -16)
+
+local hideMinimapCheckbox = makeCheckbox(nil, "Hide minimap icon", minimapSection)
+
+hideMinimapCheckbox:SetScript("OnShow", function(self)
+    self:SetChecked(DeathFeedDB.minimap and DeathFeedDB.minimap.hide)
+end)
+
+hideMinimapCheckbox:SetScript("OnClick", function(self)
+    DeathFeedDB.minimap = DeathFeedDB.minimap or {}
+    DeathFeedDB.minimap.hide = self:GetChecked()
+
+    if ldbIcon then
+        if DeathFeedDB.minimap.hide then
+            ldbIcon:Hide("DeathFeed")
+        else
+            ldbIcon:Show("DeathFeed")
+        end
+    end
+end)
+
+local maintenanceSection = makeSection("Maintenance", hideMinimapCheckbox)
 
 local clearButton = CreateFrame(
     "Button",
@@ -165,11 +194,34 @@ local clearButton = CreateFrame(
 )
 
 clearButton:SetSize(120, 24)
-clearButton:SetPoint("TOPLEFT", minimumLevelDropdown, "BOTTOMLEFT", 15, -10)
+clearButton:SetPoint("TOPLEFT", maintenanceSection, "BOTTOMLEFT", contentInset, -10)
 clearButton:SetText("Clear history")
 
 clearButton:SetScript("OnClick", function()
     wipe(DeathFeedDB.history)
     historyOffset = 0
     updateRows(false)
+end)
+
+local resetWindowButton = CreateFrame(
+    "Button",
+    nil,
+    DeathFeedOptionsPanel,
+    "UIPanelButtonTemplate"
+)
+
+resetWindowButton:SetSize(150, 24)
+resetWindowButton:SetPoint("LEFT", clearButton, "RIGHT", 8, 0)
+resetWindowButton:SetText("Reset window")
+
+resetWindowButton:SetScript("OnClick", function()
+    DeathFeedDB.point = "CENTER"
+    DeathFeedDB.relativePoint = "CENTER"
+    DeathFeedDB.x = 0
+    DeathFeedDB.y = 0
+
+    if DeathFeedWindow then
+        DeathFeedWindow:ClearAllPoints()
+        DeathFeedWindow:SetPoint("CENTER", UIParent, "CENTER", 0, 0)
+    end
 end)
