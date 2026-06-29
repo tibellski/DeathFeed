@@ -11,7 +11,9 @@ eventFrame:SetScript("OnEvent", function(_, event, message, sender, language, ch
             setWindowShown(false)
         end
 
+        restoreWindowPosition()
         updateResizeBounds()
+        restoreWindowPosition()
         updateLayout()
         trimHistory()
         setupMinimapIcon()

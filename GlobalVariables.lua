@@ -1,4 +1,4 @@
-maxHistory = 25
+maxHistory = 100
 historyOffset = 0
 ldbIcon = nil
 rowHeight = 14

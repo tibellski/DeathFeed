@@ -163,7 +163,23 @@ local minimumLevelHelp = DeathFeedOptionsPanel:CreateFontString(
 minimumLevelHelp:SetPoint("TOPLEFT", minimumLevelDropdown, "BOTTOMLEFT", 15, -2)
 minimumLevelHelp:SetText("|cff888888Guild deaths are always shown.|r")
 
-local minimapSection = makeSection("Minimap", minimumLevelHelp, -16)
+local windowSection = makeSection("Window", minimumLevelHelp, -16)
+
+local lockWindowCheckbox = makeCheckbox(nil, "Lock window position and size", windowSection)
+
+lockWindowCheckbox:SetScript("OnShow", function(self)
+    self:SetChecked(DeathFeedDB.windowLocked)
+end)
+
+lockWindowCheckbox:SetScript("OnClick", function(self)
+    if setWindowLocked then
+        setWindowLocked(self:GetChecked())
+    else
+        DeathFeedDB.windowLocked = self:GetChecked()
+    end
+end)
+
+local minimapSection = makeSection("Minimap", lockWindowCheckbox)
 
 local hideMinimapCheckbox = makeCheckbox(nil, "Hide minimap icon", minimapSection)
 

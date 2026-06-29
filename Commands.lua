@@ -7,6 +7,7 @@ local function printCommandHelp()
     printMessage("/deathfeed show - Show the feed.")
     printMessage("/deathfeed hide - Hide the feed.")
     printMessage("/deathfeed clear - Clear history.")
+    printMessage("/deathfeed reset - Reset and show the feed window.")
     printMessage("/deathfeed chat on - Hide original HardcoreDeaths chat.")
     printMessage("/deathfeed chat off - Show original HardcoreDeaths chat.")
     printMessage("/deathfeed minimap - Show or hide the minimap icon.")
@@ -27,6 +28,16 @@ SlashCmdList["DEATHFEED"] = function(input)
         historyOffset = 0
         updateRows(false)
         printMessage("History cleared.")
+    elseif input == "reset" then
+        DeathFeedDB.point = "CENTER"
+        DeathFeedDB.relativePoint = "CENTER"
+        DeathFeedDB.x = 0
+        DeathFeedDB.y = 0
+        DeathFeedDB.hidden = false
+
+        restoreWindowPosition()
+        setWindowShown(true)
+        printMessage("Window reset.")
     elseif input == "chat on" then
         DeathFeedDB.hideOriginalChat = true
         printMessage("Original HardcoreDeaths chat hidden.")

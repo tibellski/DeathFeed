@@ -14,6 +14,7 @@ local defaults = {
     width = fullMinWidth,
     height = 124,
     hidden = false,
+    windowLocked = false,
     hideOriginalChat = true,
     playGuildSound = true,
     minimumLevel = 10,
@@ -171,13 +172,18 @@ DeathFeedDB.width = math.max(compactWidth, math.min(maxWindowWidth, tonumber(Dea
 DeathFeedWindow = CreateFrame("Frame", "DeathFeedFrame", UIParent, "BackdropTemplate")
 DeathFeedWindow:SetSize(DeathFeedDB.width, DeathFeedDB.height)
 
-DeathFeedWindow:SetPoint(
-    DeathFeedDB.point,
-    UIParent,
-    DeathFeedDB.relativePoint,
-    DeathFeedDB.x,
-    DeathFeedDB.y
-)
+function restoreWindowPosition()
+    DeathFeedWindow:ClearAllPoints()
+    DeathFeedWindow:SetPoint(
+        DeathFeedDB.point or defaults.point,
+        UIParent,
+        DeathFeedDB.relativePoint or defaults.relativePoint,
+        tonumber(DeathFeedDB.x) or defaults.x,
+        tonumber(DeathFeedDB.y) or defaults.y
+    )
+end
+
+restoreWindowPosition()
 
 DeathFeedWindow:SetMovable(true)
 DeathFeedWindow:SetResizable(true)
@@ -276,6 +282,10 @@ titleDragHandle:RegisterForDrag("LeftButton")
 titleDragHandle:EnableMouse(true)
 
 titleDragHandle:SetScript("OnDragStart", function()
+    if DeathFeedDB.windowLocked then
+        return
+    end
+
     DeathFeedWindow:StartMoving()
 end)
 
@@ -299,10 +309,28 @@ resizeHandle:SetAlpha(0)
 local isResizing = false
 local resizeHandleFadeDuration = 0.15
 
+function setWindowLocked(locked)
+    local wasResizing = isResizing
+
+    DeathFeedDB.windowLocked = locked == true
+
+    titleDragHandle:EnableMouse(not DeathFeedDB.windowLocked)
+    resizeHandle:EnableMouse(not DeathFeedDB.windowLocked)
+
+    if DeathFeedDB.windowLocked then
+        isResizing = false
+        resizeHandle:SetAlpha(0)
+
+        if wasResizing then
+            DeathFeedWindow:StopMovingOrSizing()
+        end
+    end
+end
+
 resizeHandle:SetScript("OnUpdate", function(self, elapsed)
     local targetAlpha = 0
 
-    if isResizing or DeathFeedWindow:IsMouseOver() then
+    if not DeathFeedDB.windowLocked and (isResizing or DeathFeedWindow:IsMouseOver()) then
         targetAlpha = 1
     end
 
@@ -316,12 +344,20 @@ resizeHandle:SetScript("OnUpdate", function(self, elapsed)
 end)
 
 resizeHandle:SetScript("OnMouseDown", function(self)
+    if DeathFeedDB.windowLocked then
+        return
+    end
+
     isResizing = true
     self:SetAlpha(1)
     DeathFeedWindow:StartSizing("BOTTOMRIGHT")
 end)
 
 resizeHandle:SetScript("OnMouseUp", function(self)
+    if DeathFeedDB.windowLocked then
+        return
+    end
+
     isResizing = false
     DeathFeedWindow:StopMovingOrSizing()
 
@@ -331,6 +367,9 @@ resizeHandle:SetScript("OnMouseUp", function(self)
     updateLayout()
     updateRows(false)
 end)
+
+setWindowLocked(DeathFeedDB.windowLocked)
+restoreWindowPosition()
 
 DeathFeedWindow:SetScript("OnSizeChanged", function()
     local previousCompactMode = syncCompactMode()
