@@ -2,7 +2,7 @@
 ## Title: |cffcc4444DeathFeed|r
 ## Notes: Compact Hardcore death tracker
 ## Author: Linus Tibell
-## Version: 4.3.0
+## Version: 4.4.0
 ## SavedVariables: DeathFeedDB
 ## IconTexture: Interface\Icons\INV_Misc_Bone_Skull_02
 
