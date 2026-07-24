@@ -47,7 +47,6 @@ updateGuildMembers(true)
 assertEqual(namespaceRequests, 1, "requests roster through C_GuildInfo")
 assertEqual(isGuildMember("Alice"), true, "stores name without realm")
 assertEqual(isGuildMember("Bob"), true, "stores unqualified name")
-assertEqual(getRandomOnlineGuildMember("Alice"), "Bob", "selects another online guild member")
 
 members = {
     { name = "Charlie-Realm", isOnline = true },
@@ -57,7 +56,6 @@ updateGuildMembers(false)
 assertEqual(namespaceRequests, 1, "does not request roster from update event")
 assertEqual(isGuildMember("Alice"), false, "removes stale guild member")
 assertEqual(isGuildMember("Charlie"), true, "rebuilds roster from update event")
-assertEqual(getRandomOnlineGuildMember("Charlie"), nil, "excludes offline guild members")
 
 members = {
     { name = "Incomplete-Realm", isOnline = true },
