@@ -1,4 +1,5 @@
 local guildMembers = {}
+local onlineGuildMembers = {}
 
 function copyDefaults(source, target)
     for key, value in pairs(source) do
@@ -51,6 +52,23 @@ function isGuildMember(name)
     return guildMembers[name] == true
 end
 
+function getRandomOnlineGuildMember(excludedName)
+    local selectedName = nil
+    local candidateCount = 0
+
+    for name in pairs(onlineGuildMembers) do
+        if name ~= excludedName then
+            candidateCount = candidateCount + 1
+
+            if math.random(candidateCount) == 1 then
+                selectedName = name
+            end
+        end
+    end
+
+    return selectedName
+end
+
 function colorLevel(level)
     local number = tonumber(level)
 
@@ -69,21 +87,48 @@ function colorLevel(level)
     end
 end
 
-function updateGuildMembers()
-    wipe(guildMembers)
+local function requestGuildRoster()
+    if C_GuildInfo and C_GuildInfo.GuildRoster then
+        C_GuildInfo.GuildRoster()
+    elseif GuildRoster then
+        GuildRoster()
+    end
+end
 
+function updateGuildMembers(requestRefresh)
     if not IsInGuild() then
+        wipe(guildMembers)
+        wipe(onlineGuildMembers)
         return
     end
 
-    GuildRoster()
+    if requestRefresh then
+        requestGuildRoster()
+    end
 
-    for i = 1, GetNumGuildMembers() do
-        local fullName = GetGuildRosterInfo(i)
+    local memberCount = GetNumGuildMembers()
+    local newGuildMembers = {}
+    local newOnlineGuildMembers = {}
+    local loadedMemberCount = 0
+
+    for i = 1, memberCount do
+        local fullName, _, _, _, _, _, _, _, isOnline = GetGuildRosterInfo(i)
 
         if fullName then
             local name = string.match(fullName, "([^%-]+)") or fullName
-            guildMembers[name] = true
+            newGuildMembers[name] = true
+            loadedMemberCount = loadedMemberCount + 1
+
+            if isOnline then
+                newOnlineGuildMembers[name] = true
+            end
         end
+    end
+
+    -- Roster data can arrive in partial snapshots. Keep the last complete cache
+    -- until every entry reported by GetNumGuildMembers is readable.
+    if memberCount > 0 and loadedMemberCount == memberCount then
+        guildMembers = newGuildMembers
+        onlineGuildMembers = newOnlineGuildMembers
     end
 end
