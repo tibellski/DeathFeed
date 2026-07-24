@@ -1,4 +1,4 @@
-## Interface: 11508
+## Interface: 11509
 ## Title: |cffcc4444DeathFeed|r
 ## Notes: Compact Hardcore death tracker
 ## Author: Linus Tibell
